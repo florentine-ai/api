@@ -1,0 +1,51 @@
+{
+  "name": "@florentine-ai/api",
+  "version": "0.1.0",
+  "homepage": "https://florentine.ai",
+  "description": "Node.js API Wrapper for Florentine.ai - Natural language to MongoDB aggregations",
+  "type": "module",
+  "keywords": [
+    "mongodb",
+    "aggregation",
+    "natural-language",
+    "ai",
+    "llm",
+    "database",
+    "query",
+    "api",
+    "florentine"
+  ],
+  "author": "Jens Lübberstedt <jens@florentine.ai>",
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/florentine-ai/api.git"
+  },
+  "bugs": {
+    "url": "https://github.com/florentine-ai/api/issues"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "import": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.6",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "axios": "^1.8.3",
+    "bson": "^6.10.3",
+    "zod": "^3.25.20"
+  }
+}
