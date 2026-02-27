@@ -59,7 +59,7 @@ export class Florentine {
         .getInstance()
         .post('/ask', { question, config: finalConfig });
       if (res.data.result) res.data.result = JSON.parse(res.data.result);
-      if (res.data.aggregation) res.data.aggregation = EJSON.parse(res.data.aggregation);
+      if (res.data.query) res.data.query = EJSON.parse(res.data.query);
       const validatedReturn = FlorentineReturnSchema.parse(res.data);
       return validatedReturn;
     } catch (err: unknown) {

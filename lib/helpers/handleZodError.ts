@@ -16,7 +16,7 @@ export function handleZodError(error: ZodError): FlorentineApiError {
   } else if (
     issue.path.includes('florentineToken') &&
     issue.code === 'invalid_type' &&
-    issue.received === 'undefined'
+    issue.input === undefined
   ) {
     errorCode = 'NO_TOKEN';
     message =
@@ -25,12 +25,12 @@ export function handleZodError(error: ZodError): FlorentineApiError {
     const field = issue.path.join('.');
     switch (issue.code) {
       case 'invalid_type':
-        if (issue.received === 'undefined') {
+        if (issue.input === undefined) {
           message = `"${field}" is required, but missing.`;
         }
         message = ` "${field}" must be a ${issue.expected}.`;
 
-      case 'invalid_enum_value':
+      case 'invalid_value':
         message = `The value for "${field}" is not valid.`;
 
       case 'too_small':

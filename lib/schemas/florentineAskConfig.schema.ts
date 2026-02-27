@@ -31,9 +31,10 @@ export const TRequiredInputSchema = z.union([
 
 // Base config schema
 const AskConfigBaseSchema = z.object({
-  returnTypes: z.array(z.enum(['aggregation', 'result', 'answer'])).default(['answer']),
+  returnTypes: z
+    .array(z.enum(['query', 'result', 'answer']))
+    .default(['answer']),
   sessionId: z.string().optional(),
-  aggregationFormat: z.enum(['compass', 'js', 'shell']).optional(),
   requiredInputs: z.array(TRequiredInputSchema).optional()
 });
 
@@ -54,4 +55,6 @@ export const FlorentineAskConfigSchema = z.union([
   AskConfigWithoutLLMSchema
 ]);
 
-export type TFlorentineAskConfigInput = z.input<typeof FlorentineAskConfigSchema>;
+export type TFlorentineAskConfigInput = z.input<
+  typeof FlorentineAskConfigSchema
+>;

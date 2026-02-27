@@ -1,11 +1,12 @@
 import { z } from 'zod';
 
-// Primary return schema: detailed answer with aggregation
+// Primary return schema: detailed answer with query
 const DetailedSchema = z.object({
   confidence: z.number(),
   database: z.string(),
   collection: z.string(),
-  aggregation: z.array(z.unknown()),
+  query: z.union([z.array(z.unknown()), z.string()]),
+  databaseType: z.enum(['mongodb', 'mysql']),
   result: z.array(z.unknown()).optional(),
   answer: z.string().optional()
 });
@@ -22,5 +23,9 @@ const AnswerOnlySchema = z.object({
   result: z.array(z.unknown()).optional()
 });
 
-export const FlorentineReturnSchema = z.union([DetailedSchema, ResultOnlySchema, AnswerOnlySchema]);
+export const FlorentineReturnSchema = z.union([
+  DetailedSchema,
+  ResultOnlySchema,
+  AnswerOnlySchema
+]);
 export type TFlorentineReturnOutput = z.infer<typeof FlorentineReturnSchema>;
