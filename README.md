@@ -1,12 +1,13 @@
-# Florentine.ai API - Talk to your MongoDB data
+# Florentine.ai API - Talk to your MongoDB & MySQL data
 
-The Florentine.ai API lets you integrate **natural language querying for your MongoDB data** directly into your project.
+The Florentine.ai API lets you integrate **natural language querying for your MongoDB & MySQL data** directly into your project.
 
-Questions are transformed into **MongoDB aggregations that can also directly be executed and answered** in natural language.
+Questions are transformed into **database queries that can also directly be executed and answered** in natural language.
 
 Also has a couple of **extra features** under the hood, e.g.:
 
 - **Secure data separation** for multi-tenant usage
+- **Automated schema exploration**
 - **Semantic vector search/RAG support** with automated embedding creation
 - **Advanced lookup support**
 - **Exclusion of keys**
@@ -39,7 +40,7 @@ Also has a couple of **extra features** under the hood, e.g.:
 
 - Node.js >= v18.0.0
 - A Florentine.ai account (create a [free account here](https://app.florentine.ai/signup))
-- A connected database and at least one analyzed and activated collection in your Florentine.ai account
+- A connected database and at least one analyzed and activated collection/table in your Florentine.ai account
 - A Florentine.ai API Key (you can find yours on your [account dashboard](https://app.florentine.ai/dashboard))
 
 ## Installation
@@ -97,7 +98,7 @@ const FlorentineAI = new Florentine({
 
 You should now be ready to send your first API request!
 
-Come up with a question that can be answered via the data in your activated collection(s) and pass it to the `.ask()` method:
+Come up with a question that can be answered via the data in your activated collection(s)/table(s) and pass it to the `.ask()` method:
 
 ```ts
 const FlorentineAI = new Florentine({
@@ -110,7 +111,7 @@ const res = await FlorentineAI.ask({
 });
 ```
 
-By default, the **API returns a natural language answer** based on the aggregation results.
+By default, the **API returns a natural language answer** based on the query results.
 
 Imagine a `tabletennis` collection that records the results of the matches of two players.
 If I ask the question `Who won the last match?` the answer might look similar to this:
@@ -125,17 +126,17 @@ If I ask the question `Who won the last match?` the answer might look similar to
 
 By default, the API returns a natural language answer to the question provided. However, what's happening in the background is actually three steps:
 
-1. **Aggregation Generation**: The question is converted into a MongoDB aggregation query.
-2. **Query Execution**: The aggregation runs against the database using the connection string you provided.
+1. **Query Generation**: The question is converted into a database query (MongoDB aggregation pipeline or MySQL query).
+2. **Query Execution**: The query runs against the database using the connection string you provided.
 3. **Answer Generation**: The structured result is transformed into a natural language answer.
 
 You can choose which of these steps you want returned by specifying a `returnTypes` array with any combination of:
 
-| `returnTypes` Value | Description                                                                                                                                                                                                           | Expected Keys in Response                             |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `"aggregation"`     | Returns the generated MongoDB aggregation pipeline, the database and collection used and a confidence score on a scale from 0 to 10 on how confident the AI is that the aggregation will answer the question correct. | `confidence`, `database`, `collection`, `aggregation` |
-| `"result"`          | Returns the raw query results from the executed aggregation.                                                                                                                                                          | `result`                                              |
-| `"answer"`          | Returns a natural language response based on the results from the executed aggregation.                                                                                                                               | `answer`                                              |
+| `returnTypes` Value | Description                                                                                                                                                                                                | Expected Keys in Response                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `"query"`           | Returns the generated database query, the database and collection/table used, a confidence score on a scale from 0 to 10 and the database type (`"mongodb"` or `"mysql"`). | `confidence`, `database`, `collection`, `query`, `databaseType` |
+| `"result"`          | Returns the raw query results from the executed query.                                                                                                                                                     | `result`                                                             |
+| `"answer"`          | Returns a natural language response based on the results from the executed query.                                                                                                                           | `answer`                                                             |
 
 ### Example returning all three steps
 
@@ -144,7 +145,7 @@ Let's imagine the `tabletennis` example from the [first request](#first-request)
 ```ts
 const res = await FlorentineAI.ask({
   question: 'Who won the last match?',
-  returnTypes: ['aggregation', 'result', 'answer']
+  returnTypes: ['query', 'result', 'answer']
 });
 ```
 
@@ -154,7 +155,8 @@ And the response looks like this:
 {
   "database": "samples",
   "collection": "tabletennis",
-  "aggregation": [
+  "databaseType": "mongodb",
+  "query": [
     { "$sort": { "year": -1, "matchInYear": -1 } },
     { "$limit": 1 },
     {
@@ -176,9 +178,9 @@ And the response looks like this:
 
 ## Secure Data Separation for multi-tenant usage
 
-You can enable **secure data separation** by ensuring aggregation pipelines **filter data based on provided values** which we call `Required Inputs`.
+You can enable **secure data separation** by ensuring queries **filter data based on provided values** which we call `Required Inputs`.
 
-These values are **added to the pipeline** by the Florentine.ai transformation layer **after the aggregation generation by the LLM**. Thus **Florentine.ai can assure each user only retrieves the data he is eligible to**.
+These values are **added to the query** by the Florentine.ai transformation layer **after the query generation by the LLM**. Thus **Florentine.ai can assure each user only retrieves the data he is eligible to**.
 
 Keys are defined as `Required Input` in your account, please refer to the [section in our official docs](https://docs.florentine.ai/features/required-inputs.html) on how to do that.
 
@@ -198,7 +200,7 @@ const res = await FlorentineAI.ask({
 });
 ```
 
-You may also provide a `database` and a `collections` array in case you have Required Inputs with the same `keyPath` in multiple collections but different `value` for the collections:
+You may also provide a `database` and a `collections` array in case you have Required Inputs with the same `keyPath` in multiple collections/tables but different `value` for the collections/tables:
 
 ```ts
 const res = await FlorentineAI.ask({
@@ -227,7 +229,7 @@ const res = await FlorentineAI.ask({
 | `keyPath`     | Yes      | String          | The path to the field that should be filtered.                                                  | Must be a valid key path.                                                 |
 | `value`       | Yes      | Any             | The value(s) to filter by (type-specific, see [Supported Value Types](#supported-value-types)). | Must match the field's type (String, ObjectId, Boolean, Number, or Date). |
 | `database`    | No       | String          | The database containing the collections to filter.                                              | Must be provided if `collections` is provided.                            |
-| `collections` | No       | `Array<String>` | The specific collections within the database to apply the filter to.                            | Must contain at least one collection.                                     |
+| `collections` | No       | `Array<String>` | The specific collections/tables within the database to apply the filter to.                     | Must contain at least one collection/table.                               |
 
 ### Supported Value Types
 
@@ -423,19 +425,19 @@ if (err instanceof FlorentineError) {
 | `FlorentineApiError`        | `LLM_SERVICE_WITHOUT_KEY`       | You must provide a `llmKey` if `llmService` is defined             |
 | `FlorentineApiError`        | `INVALID_LLM_SERVICE`           | Invalid `llmService` provided                                      |
 | `FlorentineApiError`        | `NO_OWN_LLM_KEY`                | You need to provide your own llm key                               |
-| `FlorentineApiError`        | `NO_ACTIVE_COLLECTIONS`         | No collections activated for the account                           |
+| `FlorentineApiError`        | `NO_ACTIVE_COLLECTIONS`         | No collections/tables activated for the account                    |
 | `FlorentineApiError`        | `MISSING_REQUIRED_INPUT`        | Required input is missing                                          |
 | `FlorentineApiError`        | `INVALID_REQUIRED_INPUT`        | Required input is invalid                                          |
 | `FlorentineApiError`        | `INVALID_REQUIRED_INPUT_FORMAT` | Required input format is invalid                                   |
 | `FlorentineApiError`        | `NO_QUESTION`                   | Question is missing                                                |
-| `FlorentineApiError`        | `EXECUTION_FAILURE`             | Created aggregation execution failed                               |
+| `FlorentineApiError`        | `EXECUTION_FAILURE`             | Created query execution failed                                     |
 | `FlorentineApiError`        | `NO_CHAT_ID`                    | History chat id required but missing                               |
 | `FlorentineLLMError`        | `API_KEY_ISSUE`                 | LLM API key is invalid                                             |
 | `FlorentineLLMError`        | `NO_RETURN`                     | Florentine.ai did not receive a valid LLM return                   |
 | `FlorentineLLMError`        | `RATE_LIMIT_EXCEEDED`           | LLM Request size too big                                           |
-| `FlorentineApiError`        | `TOO_MANY_TOKENS`               | The aggregation prompt exceeds the maximum tokens of the LLM model |
-| `FlorentineConnectionError` | `CONNECTION_REFUSED`            | Could not connect to database for aggregation execution            |
-| `FlorentineCollectionError` | `NO_EXECUTION`                  | Created aggregation could not be executed                          |
-| `FlorentinePipelineError`   | `MODIFICATION_FAILED`           | Modifying the aggregation pipeline failed                          |
+| `FlorentineApiError`        | `TOO_MANY_TOKENS`               | The query prompt exceeds the maximum tokens of the LLM model       |
+| `FlorentineConnectionError` | `CONNECTION_REFUSED`            | Could not connect to database for query execution                  |
+| `FlorentineCollectionError` | `NO_EXECUTION`                  | Created query could not be executed                                |
+| `FlorentinePipelineError`   | `MODIFICATION_FAILED`           | Modifying the query pipeline failed                                |
 | `FlorentineUsageError`      | `LIMIT_REACHED`                 | All API requests included in your plan depleted                    |
 | `FlorentineUnknownError`    | `UNKNOWN_ERROR`                 | All occurring unknown errors                                       |
