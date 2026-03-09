@@ -111,7 +111,7 @@ const res = await FlorentineAI.ask({
 });
 ```
 
-By default, the **API returns a natural language answer** based on the query results.
+By default, the **API returns the raw query result**. The return type can be configured via `returnTypes`.
 
 Imagine a `tabletennis` collection that records the results of the matches of two players.
 If I ask the question `Who won the last match?` the answer might look similar to this:
@@ -124,13 +124,13 @@ If I ask the question `Who won the last match?` the answer might look similar to
 
 ## Return Types
 
-By default, the API returns a natural language answer to the question provided. However, what's happening in the background is actually three steps:
+In the background, three steps happen for every request:
 
 1. **Query Generation**: The question is converted into a database query (MongoDB aggregation pipeline or MySQL query).
 2. **Query Execution**: The query runs against the database using the connection string you provided.
 3. **Answer Generation**: The structured result is transformed into a natural language answer.
 
-You can choose which of these steps you want returned by specifying a `returnTypes` array with any combination of:
+The default return type is configured in your Florentine.ai account. You can override it per request by specifying a `returnTypes` array with any combination of:
 
 | `returnTypes` Value | Description                                                                                                                                                                                                | Expected Keys in Response                                            |
 | ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |

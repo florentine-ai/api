@@ -31,9 +31,7 @@ export const TRequiredInputSchema = z.union([
 
 // Base config schema
 const AskConfigBaseSchema = z.object({
-  returnTypes: z
-    .array(z.enum(['query', 'result', 'answer']))
-    .default(['answer']),
+  returnTypes: z.array(z.enum(['query', 'result', 'answer'])).optional(),
   sessionId: z.string().optional(),
   requiredInputs: z.array(TRequiredInputSchema).optional()
 });
